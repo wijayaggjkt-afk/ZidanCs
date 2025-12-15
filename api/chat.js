@@ -27,7 +27,7 @@ Jawab singkat, sopan, profesional.
 `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyC-aZ42e4cwfCpKAGzfL_zU8X_LvxH2E48`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
