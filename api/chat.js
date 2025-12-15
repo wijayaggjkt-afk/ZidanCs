@@ -1,67 +1,61 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ reply: 'Method not allowed' });
   }
 
   try {
     const { message } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ reply: "Pesan tidak boleh kosong." });
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
+    const systemPrompt = `
 Kamu adalah Customer Service profesional Zidan Store.
-Jawaban harus sopan, jelas, singkat, dan meyakinkan.
 
-Layanan Zidan Store:
-- Top Up BUSSID:
-  5k = 70jt UB
-  10k = 150jt UB
-  15k = 200jt UB
-  20k = 300jt UB
-  30k = 500jt UB
-  40k = 1M UB
-  45k = 1.5M UB
-  50k = 2M / MAX
+Layanan:
+- Top Up BUSSID
+  • 5K = 70JT UB
+  • 10K = 150JT UB
+  • 15K = 200JT UB
+  • 20K = 300JT UB
+  • 30K = 500JT UB
+  • 40K = 1M UB
+  • 45K = 1.5M UB
+  • 50K = 2M UB (MAX)
+- Top Up Free Fire (harga mengikuti pasar)
+- Sewa Bot WhatsApp
 
-- Top Up Free Fire:
-  Harga mengikuti harga pasar terbaru.
+Jika user ingin order → arahkan ke WhatsApp admin.
+Jawab singkat, sopan, profesional.
+`;
 
-- Sewa Bot WhatsApp:
-  Bot otomatis untuk store & personal.
-
-Jika user bertanya harga, jelaskan.
-Jika ingin order, arahkan ke WhatsApp admin.
-Jangan menyebut dirimu AI.
-          `
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ]
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ]
+      })
     });
 
-    const reply = completion.choices[0].message.content;
+    const data = await response.json();
 
-    res.status(200).json({ reply });
+    if (!data.choices) {
+      console.error(data);
+      return res.status(500).json({ reply: 'CS sedang sibuk, coba lagi sebentar.' });
+    }
+
+    res.status(200).json({
+      reply: data.choices[0].message.content
+    });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({
-      reply: "Customer Service sedang sibuk. Silakan hubungi WhatsApp."
+      reply: 'CS sedang sibuk, coba lagi sebentar.'
     });
   }
-}
+      }
