@@ -26,36 +26,34 @@ Jika user ingin order → arahkan ke WhatsApp admin.
 Jawab singkat, sopan, profesional.
 `;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ]
-      })
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: systemPrompt + "\n\nUser: " + message
+            }]
+          }]
+        })
+      }
+    );
 
     const data = await response.json();
 
-    if (!data.choices) {
+    if (!data.candidates || !data.candidates[0]) {
       console.error(data);
       return res.status(500).json({ reply: 'CS sedang sibuk, coba lagi sebentar.' });
     }
 
     res.status(200).json({
-      reply: data.choices[0].message.content
+      reply: data.candidates[0].content.parts[0].text
     });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      reply: 'CS sedang sibuk, coba lagi sebentar.'
-    });
+    res.status(500).json({ reply: 'CS sedang sibuk, coba lagi sebentar.' });
   }
       }
